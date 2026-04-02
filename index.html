@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación - Webduino</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="google-site-verification" content="cPnEhr5XsU6zoxDaVsHdI1e5m3TTRSAuej7_aM7lRtQ" />
+    <meta name="description" content="Documentación oficial de Webduino. Aprende a programar, compilar y flashear tu placa Arduino directamente desde tu navegador web sin instalar software adicional.">
+    <meta name="keywords" content="Webduino, Arduino, IDE online, Web Serial API, programar Arduino online, flashear Arduino, C++, electrónica, Puter.js, compilador Arduino en la nube">
+    <meta name="author" content="Webduino">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#1a73e8">
+
+    <!-- Open Graph / Redes Sociales (Facebook, WhatsApp, LinkedIn) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Documentación - Webduino">
+    <meta property="og:description" content="El Entorno de Desarrollo Integrado (IDE) para Arduino completamente funcional desde tu navegador. Sin instalaciones, listo para programar.">
+    <meta property="og:image" content="icon.svg.png">
+
+    <!-- Twitter Cards -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:title" content="Documentación - Webduino">
+    <meta property="twitter:description" content="El Entorno de Desarrollo Integrado (IDE) para Arduino completamente funcional desde tu navegador. Sin instalaciones, listo para programar.">
+    <meta property="twitter:image" content="icon.svg.png">
+
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link href="icon.svg.png" rel="icon">
+
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --surface-color: #f8f9fa;
+            --border-color: #e5e7eb;
+            --text-main: #111827;
+            --text-muted: #4b5563;
+            --primary: #1a73e8;
+            --primary-hover: #1557b0;
+            --sidebar-width: 260px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Roboto', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 100;
+        }
+
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .navbar-brand img {
+            height: 32px;
+            width: 32px;
+            object-fit: contain;
+        }
+
+        .navbar-links {
+            margin-left: auto;
+        }
+
+        .btn-ide {
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-ide:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            padding: 80px 24px 24px; /* Padding top to clear navbar */
+            height: 100vh;
+            overflow-y: auto;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+
+        .sidebar h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            margin-top: 24px;
+        }
+
+        .sidebar h3:first-child {
+            margin-top: 0;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 14px;
+            display: block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background-color: #e5e7eb;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 100px 48px 48px; /* Clear navbar */
+            flex: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .content-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Typography */
+        h1 { font-size: 36px; font-weight: 800; margin-top: 0; margin-bottom: 16px; }
+        h2 { font-size: 24px; font-weight: 700; margin-top: 48px; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        p { font-size: 16px; line-height: 1.6; color: var(--text-muted); margin-bottom: 16px; }
+        
+        .hero-lead { font-size: 20px; color: var(--text-muted); margin-bottom: 32px; font-weight: 400; }
+
+        .callout {
+            background-color: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 24px 0;
+        }
+        .callout p { margin: 0; color: #166534; }
+        .callout.info { background-color: #eff6ff; border-left-color: var(--primary); }
+        .callout.info p { color: #1e3a8a; }
+
+        code {
+            background-color: var(--surface-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            color: #db2777;
+            border: 1px solid var(--border-color);
+        }
+
+        pre {
+            background-color: #1f2937;
+            color: #f3f4f6;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            border: none;
+            color: inherit;
+        }
+
+        /* Feature grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+        .feature-card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .feature-card .icon {
+            color: var(--primary);
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+        .feature-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+        }
+        .feature-card p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* Mobile Warning Overlay */
+        #mobile-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-color);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 32px;
+        }
+
+        #mobile-warning .warning-icon {
+            font-size: 72px;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        #mobile-warning h2 {
+            margin-top: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            #mobile-warning {
+                display: flex;
+            }
+            .navbar, .sidebar, .main-content {
+                display: none; /* Oculta el contenido principal en móviles */
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Aviso para pantallas pequeñas -->
+    <div id="mobile-warning">
+        <span class="material-symbols-rounded warning-icon">desktop_windows</span>
+        <h2>Pantalla demasiado pequeña</h2>
+        <p>Webduino y su documentación están optimizados para ser utilizados en computadoras de escritorio o laptops. Por favor, visita esta página desde un dispositivo de escritório o pc para disfrutar de la mejor experiencia.</p>
+    </div>
+
+    <!-- Navbar -->
+    <header class="navbar">
+        <a href="ide.html" class="navbar-brand">
+            <!-- Icono referencial si lo tienes local -->
+            <img src="icon.svg.png" style="color: var(--primary); font-size: 28px;"></img>
+            Webduino Docs
+        </a>
+        <div class="navbar-links">
+            <a href="ide.html" class="btn-ide">Abrir IDE</a>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <h3>General</h3>
+        <ul>
+            <li><a href="#introduccion" class="active">Introducción</a></li>
+            <li><a href="#requisitos">Requisitos Previos</a></li>
+        </ul>
+
+        <h3>Uso del IDE</h3>
+        <ul>
+            <li><a href="#conectar-placa">Conectar una Placa</a></li>
+            <li><a href="#compilar-subir">Compilar y Subir</a></li>
+            <li><a href="#monitor-serie">Monitor Serie</a></li>
+        </ul>
+
+        <h3>Avanzado</h3>
+        <ul>
+            <li><a href="#gestor-librerias">Gestor de Librerías</a></li>
+            <li><a href="#archivos-locales">Archivos Múltiples</a></li>
+            <li><a href="#sincronizacion-nube">Sincronización en la Nube</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-container">
+            <img src="icon.svg.png" alt="" height="200" width="200">
+            <section id="introduccion">
+                <h1>Bienvenido a Webduino</h1>
+                <p class="hero-lead">El Entorno de Desarrollo Integrado (IDE) para Arduino completamente funcional desde tu navegador. Sin instalaciones, sin drivers complejos, listo para programar.</p>
+                
+                <p>Webduino utiliza tecnologías web modernas como <strong>Web Serial API</strong> y compilación en la nube para permitirte escribir código, verificarlo y flashearlo directamente a tu placa Arduino Uno desde Google Chrome o Microsoft Edge.</p>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="material-symbols-rounded icon">usb</span>
+                        <h4>Flasheo Nativo</h4>
+                        <p>Sube código directamente a tu placa por USB usando el protocolo STK500v1 integrado en JavaScript.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="material-symbols-rounded icon">cloud_sync</span>
+                        <h4>Nube Puter.js</h4>
+                        <p>Guarda y organiza tus proyectos en la nube de forma segura sin perder una línea de código.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="material-symbols-rounded icon">library_books</span>
+                        <h4>Gestor de Librerías</h4>
+                        <p>Añade dependencias (como Servo, DHT, etc.) y Webduino las resolverá automáticamente al compilar.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="requisitos">
+                <h2>Requisitos Previos</h2>
+                <p>Para usar Webduino correctamente, asegúrate de cumplir con los siguientes requisitos:</p>
+                <ul>
+                    <li><strong>Navegador Compatible:</strong> Google Chrome, Microsoft Edge, o navegadores basados en Chromium recientes. (Safari y Firefox no soportan Web Serial API por defecto).</li>
+                    <li><strong>Hardware:</strong> Una placa Arduino Uno (o clon compatible con ATmega328P).</li>
+                    <li><strong>Cable USB:</strong> Un cable de datos USB para conectar tu placa a la computadora.</li>
+                </ul>
+                <div class="callout">
+                    <p><strong>Nota:</strong> Al conectar tu placa por primera vez, tu navegador te pedirá permiso para acceder al puerto Serie. Debes otorgar este permiso para poder subir el código.</p>
+                </div>
+            </section>
+
+            <section id="conectar-placa">
+                <h2>1. Conectar una Placa</h2>
+                <p>El primer paso para empezar a trabajar es establecer la comunicación entre tu navegador y tu placa Arduino.</p>
+                <ol>
+                    <li>Conecta tu Arduino a un puerto USB de tu computadora.</li>
+                    <li>En Webduino, haz clic en el botón superior que dice <strong>"Seleccionar Placa (Desconectado)"</strong> junto al ícono de USB.</li>
+                    <li>Aparecerá una ventana emergente del navegador. Selecciona el puerto correspondiente a tu placa (usualmente dice algo como "USB Serial", "CH340" o "Arduino Uno").</li>
+                    <li>Haz clic en <strong>"Conectar"</strong>.</li>
+                </ol>
+                <p>Si la conexión es exitosa, el botón se pondrá azul y dirá "Arduino Conectado".</p>
+            </section>
+
+            <section id="compilar-subir">
+                <h2>2. Compilar y Subir Código</h2>
+                <p>Webduino incluye un potente editor basado en Ace Editor con autocompletado para C/C++.</p>
+                
+                <h3>Verificar (Compilar)</h3>
+                <p>Haz clic en el botón <kbd><span class="material-symbols-rounded" style="font-size: 14px; vertical-align: middle;">check</span> Verificar</kbd>. Tu código será enviado a nuestro motor de compilación en la nube (basado en Wokwi). Si hay errores de sintaxis, se mostrarán en la pestaña <strong>"Salida de Compilación"</strong> y se resaltarán con una <span style="color: red;">X roja</span> directamente en el editor de código.</p>
+
+                <h3>Subir a Placa</h3>
+                <p>Haz clic en <kbd><span class="material-symbols-rounded" style="font-size: 14px; vertical-align: middle;">play_arrow</span> Subir a Placa</kbd>. Esto ejecutará el proceso de compilación y, si es exitoso, iniciará el motor <strong>avrdude interno de JavaScript</strong>. La placa se reiniciará automáticamente y el código se escribirá en su memoria flash.</p>
+            </section>
+
+            <section id="monitor-serie">
+                <h2>3. Monitor Serie</h2>
+                <p>Para depurar tu código y leer valores de sensores, Webduino incluye un Monitor Serie integrado en el panel inferior.</p>
+                <ul>
+                    <li>Asegúrate de que la velocidad de baudios en la esquina inferior derecha coincida con la declarada en tu código (ej. <code>Serial.begin(115200);</code>).</li>
+                    <li>El monitor funciona en tiempo real sin bloquear la interfaz.</li>
+                    <li>Puedes enviar comandos a la placa escribiendo en la caja de texto y presionando Enter o el botón "Enviar".</li>
+                </ul>
+            </section>
+
+            <section id="gestor-librerias">
+                <h2>4. Gestor de Librerías</h2>
+                <p>Si tu proyecto requiere librerías externas (como pantallas LCD, sensores complejos o servomotores), no necesitas instalarlas manualmente en tu computadora.</p>
+                <ol>
+                    <li>Haz clic en el ícono de libros (<span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">library_books</span>) en la barra del explorador izquierdo.</li>
+                    <li>Se abrirá el Gestor de Librerías.</li>
+                    <li>Escribe el nombre de las librerías que necesitas, <strong>una por línea</strong>.</li>
+                </ol>
+                
+                <p><strong>Ejemplo válido:</strong></p>
+<pre><code>LiquidCrystal
+Servo
+DHT sensor library
+Adafruit NeoPixel</code></pre>
+
+                <p>Al hacer clic en Guardar, Webduino creará un archivo especial llamado <code>libraries.txt</code>. Durante la compilación, el servidor leerá este archivo e instalará automáticamente las dependencias antes de construir tu firmware.</p>
+            </section>
+
+            <section id="archivos-locales">
+                <h2>5. Trabajar con Múltiples Archivos</h2>
+                <p>A medida que tus proyectos crecen, es buena idea dividir el código en múltiples archivos (<code>.ino</code>, <code>.cpp</code>, <code>.h</code>).</p>
+                
+                <ul>
+                    <li><strong>Crear archivos:</strong> Usa el ícono <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">note_add</span> para añadir nuevas pestañas.</li>
+                    <li><strong>Subir desde tu PC:</strong> Usa el ícono <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">upload</span> para cargar archivos existentes desde tu disco duro directamente al editor de Webduino.</li>
+                </ul>
+                <div class="callout info">
+                    <p>Al hacer clic en "Verificar" o "Subir", Webduino empaqueta de forma inteligente <strong>todos los archivos</strong> visibles en el explorador y los envía al compilador, por lo que los <code>#include "mi_archivo.h"</code> funcionarán a la perfección.</p>
+                </div>
+            </section>
+
+            <section id="sincronizacion-nube">
+                <h2>6. Sincronización en la Nube (Puter)</h2>
+                <p>Webduino se integra con <strong>Puter.js</strong> para ofrecer almacenamiento persistente en la nube totalmente gratuito.</p>
+                <ol>
+                    <li>Haz clic en el ícono de la nube (<span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">cloud</span>) en la barra de actividad izquierda.</li>
+                    <li>Si es tu primera vez, se te pedirá iniciar sesión o crear una cuenta rápida de Puter.</li>
+                    <li>Una vez dentro, podrás <strong>Guardar</strong> tu entorno de trabajo actual (con todos sus archivos y librerías) bajo un nombre de proyecto.</li>
+                    <li>También verás una lista de tus proyectos guardados, con la opción de <strong>Cargar</strong> o <strong>Borrar</strong> en cualquier momento y desde cualquier computadora.</li>
+                </ol>
+            </section>
+
+            <footer style="margin-top: 64px; border-top: 1px solid var(--border-color); padding-top: 24px; color: var(--text-muted); font-size: 14px; text-align: center;">
+                <p>Webduino - Hecho con <span style="color: #ef4444;">&hearts;</span> para la comunidad Maker.</p>
+            </footer>
+        </div>
+    </main>
+
+    <script>
+        // Smooth scrolling e interacciones de la barra lateral
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.sidebar a');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                // Se utiliza scrollY + algo de offset para detectar la sección activa
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    if (scrollY >= (sectionTop - 150)) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

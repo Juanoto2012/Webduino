@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webduino</title>
+
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link href="icon.svg.png" rel="icon">
+    
+    <!-- Ace Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ext-language_tools.js"></script>
+    
+    <!-- Puter.js para Sincronización en la Nube -->
+    <script src="https://js.puter.com/v2/"></script>
+    
+    <!-- Material Web Components (M3) via Import Map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+    </script>
+
+    <style>
+        :root {
+            /* Tema Light Moderno IDE */
+            --ide-bg: #f3f4f6;
+            --ide-surface: #ffffff;
+            --ide-surface-variant: #f8f9fa;
+            --ide-border: #e5e7eb;
+            --ide-text: #4b5563;
+            --ide-text-light: #111827;
+            --ide-primary: #1a73e8;
+            --ide-primary-hover: #1557b0;
+            --ide-accent: #1a73e8;
+            --ide-error: #d93025;
+            
+            /* Material Web Component Overrides */
+            --md-sys-color-primary: var(--ide-primary);
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-surface: var(--ide-surface);
+            --md-sys-color-on-surface: var(--ide-text-light);
+            --md-sys-color-surface-container: var(--ide-surface);
+            --md-sys-color-outline: var(--ide-border);
+            
+            font-family: 'Roboto', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--ide-bg);
+            color: var(--ide-text);
+        }
+
+        body { display: flex; height: 100vh; width: 100vw; }
+
+        /* Sidebar (Activity Bar) */
+        .activity-bar {
+            width: 48px;
+            background-color: var(--ide-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 16px;
+            z-index: 10;
+        }
+
+        .activity-icon {
+            color: #6b7280;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: color 0.2s, background-color 0.2s;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .activity-icon:hover, .activity-icon.active {
+            color: var(--ide-primary);
+            background-color: #e5e7eb;
+        }
+
+        /* Sidebar Panel (Explorer) */
+        .sidebar-panel {
+            width: 280px; /* Un poco más ancho para los nuevos iconos */
+            background-color: var(--ide-surface-variant);
+            border-right: 1px solid var(--ide-border);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.2s ease;
+        }
+        .sidebar-panel.hidden { width: 0; border-right: none; overflow: hidden; }
+        .sidebar-header {
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--ide-text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            white-space: nowrap;
+        }
+        .file-item {
+            padding: 6px 16px;
+            font-size: 13px;
+            color: var(--ide-text-light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-item:hover { background-color: #e5e7eb; }
+        .file-item.active { background-color: #d1d5db; color: var(--ide-primary); font-weight: 500; }
+        .icon-btn { cursor: pointer; font-size: 16px; color: var(--ide-text); }
+        .icon-btn:hover { color: var(--ide-primary); }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1; display: flex; flex-direction: column;
+            min-width: 0; padding: 8px 8px 8px 0; gap: 8px;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            height: 48px; background-color: var(--ide-surface);
+            display: flex; align-items: center; padding: 0 16px;
+            border: 1px solid var(--ide-border); border-radius: 12px; gap: 12px;
+        }
+
+        .board-selector {
+            display: flex; align-items: center; background: var(--ide-surface-variant);
+            border: 1px solid var(--ide-border); border-radius: 6px;
+            padding: 4px 12px; font-size: 13px; color: var(--ide-text-light);
+            cursor: pointer; gap: 8px; transition: background 0.2s;
+        }
+        .board-selector:hover { background: #e5e7eb; }
+
+        .action-buttons { display: flex; gap: 8px; margin-left: auto; }
+
+        /* Editor Area */
+        .editor-wrapper {
+            flex: 1; display: flex; flex-direction: column; position: relative;
+            background-color: var(--ide-surface); border-radius: 12px;
+            border: 1px solid var(--ide-border); overflow: hidden;
+        }
+
+        .file-tabs {
+            height: 40px; background-color: var(--ide-surface-variant);
+            display: flex; border-bottom: 1px solid var(--ide-border);
+            padding: 0 8px; align-items: flex-end;
+        }
+
+        .file-tab {
+            background-color: var(--ide-surface); color: var(--ide-text-light);
+            padding: 0 16px; display: flex; align-items: center; height: 32px;
+            font-size: 13px; border: 1px solid var(--ide-border);
+            border-bottom: none; border-radius: 8px 8px 0 0; gap: 6px; font-weight: 500;
+        }
+
+        #code-editor {
+            flex: 1; height: 100% !important; width: 100%;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            background: transparent; border-radius: 0 0 12px 12px;
+        }
+
+        /* Bottom Panel */
+        .bottom-panel {
+            height: 250px; background-color: var(--ide-surface);
+            border: 1px solid var(--ide-border); border-radius: 12px;
+            display: flex; flex-direction: column; transition: height 0.3s ease; overflow: hidden;
+        }
+        .bottom-panel.collapsed { height: 40px; }
+
+        .panel-header {
+            display: flex; align-items: center; height: 40px;
+            background-color: var(--ide-surface-variant); padding: 0 16px;
+            border-bottom: 1px solid var(--ide-border);
+        }
+
+        md-tabs { --md-sys-color-surface: transparent; width: 300px; }
+        .panel-actions { margin-left: auto; display: flex; gap: 8px; }
+
+        .panel-content {
+            flex: 1; overflow-y: auto; padding: 12px;
+            font-family: 'Consolas', monospace; font-size: 13px; position: relative;
+        }
+
+        /* Terminal Logs */
+        .log-entry { margin-bottom: 4px; line-height: 1.4; word-wrap: break-word; }
+        .log-info { color: #6b7280; }
+        .log-success { color: #059669; }
+        .log-error { color: #dc2626; }
+        .log-command { color: #4f46e5; }
+
+        /* Serial Monitor Specifics */
+        .serial-tools {
+            display: flex; gap: 8px; padding: 8px;
+            background: var(--ide-surface-variant); border-top: 1px solid var(--ide-border);
+            align-items: center;
+        }
+        
+        .serial-input, .dialog-input {
+            flex: 1; background: var(--ide-surface); border: 1px solid var(--ide-border);
+            color: var(--ide-text-light); padding: 8px 12px; border-radius: 6px;
+            font-family: inherit;
+        }
+        .serial-input { font-family: monospace; }
+        .serial-input:focus, .dialog-input:focus {
+            outline: none; border-color: var(--ide-primary); box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        .tab-view { display: none; height: 100%; flex-direction: column; }
+        .tab-view.active { display: flex; }
+
+        .baud-select {
+            background: var(--ide-surface); border: 1px solid var(--ide-border);
+            color: var(--ide-text-light); padding: 8px; border-radius: 6px; cursor: pointer;
+        }
+
+        .material-symbols-rounded { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .filled { font-variation-settings: 'FILL' 1; }
+    </style>
+</head>
+<body>
+
+    <!-- Activity Bar -->
+    <div class="activity-bar">
+        <span class="material-symbols-rounded activity-icon active" id="nav-explorer" title="Explorador">folder</span>
+        <span class="material-symbols-rounded activity-icon" id="nav-cloud" title="Gestor de Nube (Puter)">cloud</span>
+        <div style="flex:1"></div>
+        <span class="material-symbols-rounded activity-icon" id="nav-settings" title="Configuración">settings</span>
+    </div>
+
+    <!-- Explorer Panel -->
+    <div class="sidebar-panel" id="explorer-panel">
+        <div class="sidebar-header">
+            <span>Explorador</span>
+            <div style="display: flex; gap: 4px;">
+                <span class="material-symbols-rounded icon-btn" id="btn-download-file" title="Descargar Archivo">download</span>
+                <span class="material-symbols-rounded icon-btn" id="btn-upload-local" title="Subir archivo desde PC">upload</span>
+                <span class="material-symbols-rounded icon-btn" id="btn-manage-libs" title="Añadir Librerías Arduino">library_books</span>
+                <span class="material-symbols-rounded icon-btn" id="btn-new-file" title="Nuevo Archivo">note_add</span>
+            </div>
+        </div>
+        
+        <!-- Input Oculto para Subir Archivos -->
+        <input type="file" id="local-file-input" multiple style="display: none;">
+        
+        <div id="new-file-container" style="display: none; padding: 8px 16px; background: var(--ide-surface);">
+            <input type="text" id="new-file-input" placeholder="ej. utils.cpp" style="width: 100%; box-sizing: border-box; padding: 6px; font-size: 12px; border: 1px solid var(--ide-border); border-radius: 4px; margin-bottom: 6px;">
+            <button id="btn-confirm-file" style="width: 100%; font-size: 12px; font-weight: bold; padding: 6px; background: var(--ide-primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Crear</button>
+        </div>
+        <ul class="file-list" id="file-list">
+            <!-- Archivos generados dinámicamente -->
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="board-selector" id="btn-connect" title="Haz clic para conectar vía WebUSB/Serial">
+                <span class="material-symbols-rounded">usb</span>
+                <span id="board-name">Seleccionar Placa (Desconectado)</span>
+                <span class="material-symbols-rounded" style="font-size: 16px;">arrow_drop_down</span>
+            </div>
+
+            <div class="action-buttons">
+                <md-filled-button id="btn-compile" style="--md-filled-button-container-color: var(--ide-surface-variant); --md-filled-button-label-text-color: var(--ide-text-light); --md-filled-button-icon-color: #0f9d58;">
+                    <md-icon slot="icon" class="material-symbols-rounded">check</md-icon>
+                    Verificar
+                </md-filled-button>
+
+                <md-filled-button id="btn-upload">
+                    <md-icon slot="icon" class="material-symbols-rounded filled">play_arrow</md-icon>
+                    Subir a Placa
+                </md-filled-button>
+            </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor-wrapper">
+            <div class="file-tabs">
+                <div class="file-tab">
+                    <span class="material-symbols-rounded" id="current-tab-icon" style="font-size: 16px; color: #0f9d58;">description</span>
+                    <span id="current-tab-name">main.ino</span>
+                </div>
+            </div>
+            <div id="code-editor"></div>
+        </div>
+
+        <!-- Bottom Panel -->
+        <div class="bottom-panel" id="bottom-panel">
+            <div class="panel-header">
+                <md-tabs id="panel-tabs">
+                    <md-primary-tab id="tab-output-btn" active>Salida de Compilación</md-primary-tab>
+                    <md-primary-tab id="tab-serial-btn">Monitor Serie</md-primary-tab>
+                </md-tabs>
+                <div class="panel-actions">
+                    <md-icon-button id="btn-clear-panel" title="Limpiar Consola"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M600-240v-80h160v80H600Zm0-320v-80h280v80H600Zm0 160v-80h240v80H600ZM120-640H80v-80h160v-60h160v60h160v80h-40v360q0 33-23.5 56.5T440-200H200q-33 0-56.5-23.5T120-280v-360Zm80 0v360h240v-360H200Zm0 0v360-360Z"/></svg></md-icon-button>
+                    <md-icon-button id="btn-toggle-panel" title="Ocultar/Mostrar Panel"><svg id="toggle-icon-svg" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-80 240-320l57-57 183 183 183-183 57 57L480-80ZM298-584l-58-56 240-240 240 240-58 56-182-182-182 182Z"/></svg></md-icon-button>
+                </div>
+            </div>
+
+            <!-- Output Tab -->
+            <div class="tab-view active" id="tab-output">
+                <div class="panel-content" id="output-console">
+                    <div class="log-entry log-info">Webduino v2.0.0</div>
+                    <div class="log-entry log-success">¡Compilador y Flasher nativo integrados! Conecta tu placa.</div>
+                </div>
+            </div>
+
+            <!-- Serial Monitor Tab -->
+            <div class="tab-view" id="tab-serial">
+                <div class="panel-content" id="serial-console" style="overflow-y: auto; display: flex; flex-direction: column;">
+                    <div class="log-entry log-info" id="serial-status">Monitor Serie inactivo. Conecta una placa primero.</div>
+                </div>
+                <div class="serial-tools">
+                    <input type="text" class="serial-input" id="serial-input" placeholder="Escribe un mensaje para enviar a la placa..." disabled>
+                    <select class="baud-select" id="baud-rate">
+                        <option value="9600">9600 baud</option>
+                        <option value="19200">19200 baud</option>
+                        <option value="38400">38400 baud</option>
+                        <option value="57600">57600 baud</option>
+                        <option value="115200" selected>115200 baud</option>
+                    </select>
+                    <md-filled-tonal-button id="btn-send-serial" disabled>Enviar</md-filled-tonal-button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración -->
+    <md-dialog id="settings-dialog">
+        <div slot="headline">Configuración</div>
+        <div slot="content" style="display: flex; flex-direction: column; gap: 16px; min-width: 300px; padding-top: 8px;">
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 500;">
+                Tema del Editor
+                <select id="setting-theme" class="dialog-input">
+                    <option value="ace/theme/chrome">Chrome (Claro)</option>
+                    <option value="ace/theme/github">GitHub (Claro)</option>
+                    <option value="ace/theme/monokai">Monokai (Oscuro)</option>
+                    <option value="ace/theme/dracula">Dracula (Oscuro)</option>
+                    <option value="ace/theme/tomorrow_night_eighties">Tomorrow Night (Oscuro)</option>
+                </select>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 500;">
+                Tamaño de Fuente (px)
+                <input type="number" id="setting-fontsize" value="14" min="10" max="30" class="dialog-input">
+            </label>
+        </div>
+        <div slot="actions">
+            <md-text-button id="btn-settings-close">Cerrar</md-text-button>
+        </div>
+    </md-dialog>
+
+    <!-- Modal de Librerías -->
+    <md-dialog id="libs-dialog">
+        <div slot="headline">Gestor de Librerías</div>
+        <div slot="content" style="display: flex; flex-direction: column; gap: 8px; min-width: 350px; padding-top: 8px;">
+            <p style="font-size: 13px; color: var(--ide-text); margin: 0;">Escribe los nombres de las librerías Arduino que necesites (una por línea). Se instalarán al compilar.</p>
+            <p style="font-size: 11px; color: #6b7280; margin: 0; margin-bottom: 8px;">Ejemplo:<br>Servo<br>DHT sensor library<br>LiquidCrystal</p>
+            <textarea id="libs-input" class="dialog-input" style="height: 120px; resize: vertical; font-family: monospace;" placeholder="LiquidCrystal"></textarea>
+        </div>
+        <div slot="actions">
+            <md-text-button id="btn-libs-close">Cancelar</md-text-button>
+            <md-filled-button id="btn-libs-save">Guardar</md-filled-button>
+        </div>
+    </md-dialog>
+
+    <!-- Modal de Nube (Puter) -->
+    <md-dialog id="cloud-dialog">
+        <div slot="headline">Proyectos en la Nube (Puter)</div>
+        <div slot="content" style="display: flex; flex-direction: column; gap: 16px; min-width: 350px; padding-top: 8px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="cloud-proj-name" placeholder="Nombre para guardar proyecto actual..." class="dialog-input">
+                <md-filled-button id="btn-cloud-save">Guardar</md-filled-button>
+            </div>
+            <div style="font-size: 13px; color: var(--ide-text); font-weight: bold; margin-top: 8px;">Tus Proyectos Guardados:</div>
+            <ul id="cloud-proj-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+                <li style="color: gray; font-size: 13px;">Cargando nube...</li>
+            </ul>
+        </div>
+        <div slot="actions">
+            <md-text-button id="btn-cloud-close">Cerrar</md-text-button>
+        </div>
+    </md-dialog>
+
+    <!-- Scripts -->
+    <script>
+        // --- 1. Inicialización de Configuraciones (Settings) ---
+        const defaultSettings = { theme: "ace/theme/chrome", fontSize: 14 };
+        let settings = JSON.parse(localStorage.getItem('webduino_settings')) || defaultSettings;
+        
+        // --- 2. Inicialización del Editor y Sistema de Archivos ---
+        const defaultFiles = {
+            "main.ino": `// Webduino - Flasheo Real Integrado\n// ¡Edita los tiempos y presiona "Subir a Placa"!\n\nint ledPin = 13;\n\nvoid setup() {\n  // Inicializamos el pin digital como salida.\n  pinMode(ledPin, OUTPUT);\n  \n  // Inicializamos la comunicación serie\n  Serial.begin(115200);\n  Serial.println("¡Arduino reiniciado correctamente con nuevo firmware!");\n}\n\nvoid loop() {\n  digitalWrite(ledPin, HIGH);   // Enciende el LED\n  Serial.println("LED Encendido");\n  delay(1000);                  // Espera un segundo\n  \n  digitalWrite(ledPin, LOW);    // Apaga el LED\n  Serial.println("LED Apagado");\n  delay(1000);                  // Espera un segundo\n}\n`
+        };
+
+        let files = JSON.parse(localStorage.getItem('webduino_files')) || defaultFiles;
+        let currentFile = Object.keys(files)[0] || "main.ino";
+
+        ace.require("ace/ext/language_tools");
+        const editor = ace.edit("code-editor");
+        editor.session.setMode("ace/mode/c_cpp"); 
+        editor.setOptions({
+            enableBasicAutocompletion: true,
+            enableSnippets: true,
+            enableLiveAutocompletion: true,
+            fontFamily: "'JetBrains Mono', 'Consolas', monospace",
+            showPrintMargin: false,
+            highlightActiveLine: true
+        });
+
+        function applySettings() {
+            editor.setTheme(settings.theme);
+            editor.setFontSize(settings.fontSize + "px");
+            document.getElementById('setting-theme').value = settings.theme;
+            document.getElementById('setting-fontsize').value = settings.fontSize;
+        }
+        applySettings();
+
+        editor.session.on('change', () => {
+            files[currentFile] = editor.getValue();
+            localStorage.setItem('webduino_files', JSON.stringify(files));
+            editor.getSession().clearAnnotations();
+        });
+
+        // --- 3. Lógica de UI (Configuración) ---
+        const settingsDialog = document.getElementById('settings-dialog');
+        document.getElementById('nav-settings').addEventListener('click', () => settingsDialog.show());
+        document.getElementById('btn-settings-close').addEventListener('click', () => settingsDialog.close());
+
+        document.getElementById('setting-theme').addEventListener('change', (e) => {
+            settings.theme = e.target.value;
+            localStorage.setItem('webduino_settings', JSON.stringify(settings));
+            applySettings();
+        });
+        
+        document.getElementById('setting-fontsize').addEventListener('change', (e) => {
+            settings.fontSize = parseInt(e.target.value);
+            localStorage.setItem('webduino_settings', JSON.stringify(settings));
+            applySettings();
+        });
+
+        // --- 4. Gestión de UI del Explorador ---
+        const explorerPanel = document.getElementById('explorer-panel');
+        const navExplorer = document.getElementById('nav-explorer');
+        const fileList = document.getElementById('file-list');
+        const currentTabName = document.getElementById('current-tab-name');
+        const currentTabIcon = document.getElementById('current-tab-icon');
+        
+        const newFileContainer = document.getElementById('new-file-container');
+        const newFileInput = document.getElementById('new-file-input');
+
+        navExplorer.addEventListener('click', () => {
+            explorerPanel.classList.toggle('hidden');
+            navExplorer.classList.toggle('active');
+            setTimeout(() => editor.resize(), 200); 
+        });
+
+        function renderFiles() {
+            fileList.innerHTML = '';
+            for (const filename in files) {
+                const li = document.createElement('li');
+                li.className = `file-item ${filename === currentFile ? 'active' : ''}`;
+                
+                let iconColor = '#1a73e8';
+                if(filename === 'libraries.txt') iconColor = '#8b5cf6'; // Morado para librerías
+                else if(filename.endsWith('.ino') || filename.endsWith('.cpp') || filename.endsWith('.h')) iconColor = '#0f9d58'; 
+                else if(filename.endsWith('.html') || filename.endsWith('.css') || filename.endsWith('.js')) iconColor = '#e37400'; 
+                
+                let iconName = filename === 'libraries.txt' ? 'library_books' : 'description';
+
+                li.innerHTML = `<span class="material-symbols-rounded" style="font-size: 16px; color: ${iconColor};">${iconName}</span> ${filename}`;
+                li.addEventListener('click', () => switchFile(filename, iconColor, iconName));
+                fileList.appendChild(li);
+            }
+        }
+
+        function switchFile(filename, iconColor = '#0f9d58', iconName = 'description') {
+            if (!files.hasOwnProperty(filename)) return;
+            currentFile = filename;
+            editor.setValue(files[filename], -1);
+            currentTabName.textContent = filename;
+            currentTabIcon.style.color = iconColor;
+            currentTabIcon.textContent = iconName;
+            
+            if(filename.endsWith('.js') || filename.endsWith('.json')) editor.session.setMode("ace/mode/javascript");
+            else if(filename.endsWith('.html')) editor.session.setMode("ace/mode/html");
+            else if(filename.endsWith('.css')) editor.session.setMode("ace/mode/css");
+            else if(filename === 'libraries.txt') editor.session.setMode("ace/mode/text");
+            else editor.session.setMode("ace/mode/c_cpp");
+
+            renderFiles();
+        }
+
+        document.getElementById('btn-new-file').addEventListener('click', () => {
+            newFileContainer.style.display = newFileContainer.style.display === 'none' ? 'block' : 'none';
+            if(newFileContainer.style.display === 'block') {
+                newFileInput.focus();
+                newFileInput.style.borderColor = 'var(--ide-border)';
+            }
+        });
+
+        function createNewFile() {
+            const newName = newFileInput.value.trim();
+            if (newName !== '') {
+                if(files.hasOwnProperty(newName)) {
+                    newFileInput.style.borderColor = 'var(--ide-error)'; 
+                    return;
+                }
+                newFileInput.style.borderColor = 'var(--ide-border)';
+                files[newName] = '// Nuevo archivo: ' + newName + '\n';
+                switchFile(newName, '#1a73e8');
+                newFileInput.value = '';
+                newFileContainer.style.display = 'none';
+                localStorage.setItem('webduino_files', JSON.stringify(files));
+            }
+        }
+
+        document.getElementById('btn-confirm-file').addEventListener('click', createNewFile);
+        newFileInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createNewFile();
+        });
+
+        switchFile(currentFile, '#0f9d58');
+
+        // DESCARGAR ARCHIVO
+        document.getElementById('btn-download-file').addEventListener('click', () => {
+            if (!files[currentFile]) return;
+            const blob = new Blob([files[currentFile]], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFile;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // --- 4.1 SUBIR ARCHIVO DESDE PC ---
+        const localFileInput = document.getElementById('local-file-input');
+        
+        document.getElementById('btn-upload-local').addEventListener('click', () => {
+            localFileInput.click();
+        });
+
+        localFileInput.addEventListener('change', (e) => {
+            const uploadedFiles = e.target.files;
+            if (!uploadedFiles || uploadedFiles.length === 0) return;
+            
+            let loadedCount = 0;
+            for (let i = 0; i < uploadedFiles.length; i++) {
+                const f = uploadedFiles[i];
+                const reader = new FileReader();
+                
+                reader.onload = (event) => {
+                    files[f.name] = event.target.result;
+                    loadedCount++;
+                    
+                    if (loadedCount === uploadedFiles.length) {
+                        localStorage.setItem('webduino_files', JSON.stringify(files));
+                        switchFile(f.name); // Mostrar el último archivo subido
+                        renderFiles();
+                        logToOutput(`Subidos ${loadedCount} archivo(s) desde tu dispositivo exitosamente.`, 'success');
+                        tabs.activeTabIndex = 0; // Mostrar consola si no está visible
+                    }
+                };
+                reader.readAsText(f);
+            }
+            e.target.value = ''; // Resetear el input
+        });
+
+        // --- 4.2 GESTOR DE LIBRERÍAS ARDUINO ---
+        const libsDialog = document.getElementById('libs-dialog');
+        const libsInput = document.getElementById('libs-input');
+
+        document.getElementById('btn-manage-libs').addEventListener('click', () => {
+            libsInput.value = files['libraries.txt'] || '';
+            libsDialog.show();
+        });
+
+        document.getElementById('btn-libs-close').addEventListener('click', () => libsDialog.close());
+
+        document.getElementById('btn-libs-save').addEventListener('click', () => {
+            const libsText = libsInput.value.trim();
+            if (libsText !== '') {
+                files['libraries.txt'] = libsText;
+            } else {
+                delete files['libraries.txt']; // Eliminar si se deja vacío
+                if(currentFile === 'libraries.txt') {
+                    switchFile('main.ino'); // Cambiar a main.ino si se borró libraries
+                }
+            }
+            localStorage.setItem('webduino_files', JSON.stringify(files));
+            renderFiles();
+            libsDialog.close();
+            logToOutput('Librerías actualizadas. Serán instaladas en la próxima compilación.', 'success');
+        });
+
+
+        // --- 5. NUBE PUTER (GESTOR DE PROYECTOS) ---
+        const cloudDialog = document.getElementById('cloud-dialog');
+        
+        document.getElementById('nav-cloud').addEventListener('click', async () => {
+            try {
+                if (!puter.auth.isSignedIn()) {
+                    logToOutput('Iniciando sesión segura en Puter...', 'info');
+                    await puter.auth.signIn();
+                }
+                cloudDialog.show();
+                await renderCloudProjects();
+            } catch (err) {
+                logToOutput('Error de autenticación con Puter: ' + err.message, 'error');
+            }
+        });
+
+        document.getElementById('btn-cloud-close').addEventListener('click', () => {
+            cloudDialog.close();
+        });
+
+        async function renderCloudProjects() {
+            const listContainer = document.getElementById('cloud-proj-list');
+            listContainer.innerHTML = '<li style="color: gray; font-size: 13px;">Cargando nube...</li>';
+            
+            try {
+                const data = await puter.kv.get('webduino_cloud_projects');
+                const projects = data ? JSON.parse(data) : {};
+                listContainer.innerHTML = '';
+                
+                if (Object.keys(projects).length === 0) {
+                    listContainer.innerHTML = '<li style="color: gray; font-size: 13px;">No tienes proyectos guardados aún. Guarda el actual arriba.</li>';
+                    return;
+                }
+                
+                for (const [name, projFiles] of Object.entries(projects)) {
+                    const li = document.createElement('li');
+                    li.style.display = 'flex';
+                    li.style.justifyContent = 'space-between';
+                    li.style.alignItems = 'center';
+                    li.style.padding = '8px 12px';
+                    li.style.background = 'var(--ide-surface-variant)';
+                    li.style.borderRadius = '6px';
+                    li.style.border = '1px solid var(--ide-border)';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = name;
+                    nameSpan.style.fontWeight = '500';
+                    nameSpan.style.fontSize = '14px';
+                    
+                    const btns = document.createElement('div');
+                    btns.style.display = 'flex';
+                    btns.style.gap = '8px';
+                    
+                    const btnLoad = document.createElement('md-filled-tonal-button');
+                    btnLoad.textContent = 'Cargar';
+                    btnLoad.onclick = () => {
+                        files = projFiles;
+                        localStorage.setItem('webduino_files', JSON.stringify(files));
+                        currentFile = Object.keys(files)[0] || "main.ino";
+                        switchFile(currentFile);
+                        renderFiles();
+                        cloudDialog.close();
+                        logToOutput(`Proyecto '${name}' cargado con éxito.`, 'success');
+                    };
+                    
+                    const btnDel = document.createElement('md-text-button');
+                    btnDel.textContent = 'Borrar';
+                    btnDel.style.setProperty('--md-text-button-label-text-color', 'var(--ide-error)');
+                    btnDel.onclick = async () => {
+                        if (confirm(`¿Estás seguro de eliminar el proyecto '${name}' para siempre?`)) {
+                            delete projects[name];
+                            await puter.kv.set('webduino_cloud_projects', JSON.stringify(projects));
+                            renderCloudProjects();
+                            logToOutput(`Proyecto '${name}' eliminado.`, 'info');
+                        }
+                    };
+                    
+                    btns.appendChild(btnLoad);
+                    btns.appendChild(btnDel);
+                    li.appendChild(nameSpan);
+                    li.appendChild(btns);
+                    listContainer.appendChild(li);
+                }
+            } catch (e) {
+                listContainer.innerHTML = `<li style="color: var(--ide-error); font-size: 13px;">Error al cargar: ${e.message}</li>`;
+            }
+        }
+
+        document.getElementById('btn-cloud-save').addEventListener('click', async () => {
+            const nameInput = document.getElementById('cloud-proj-name');
+            const projName = nameInput.value.trim();
+            if (!projName) { alert("Escribe un nombre para tu proyecto primero."); return; }
+            
+            try {
+                const data = await puter.kv.get('webduino_cloud_projects');
+                const projects = data ? JSON.parse(data) : {};
+                
+                if (projects[projName]) {
+                    if (!confirm(`El proyecto '${projName}' ya existe. ¿Deseas sobrescribirlo?`)) return;
+                }
+                
+                projects[projName] = files;
+                await puter.kv.set('webduino_cloud_projects', JSON.stringify(projects));
+                
+                nameInput.value = '';
+                await renderCloudProjects();
+                logToOutput(`Proyecto '${projName}' guardado de forma segura en la nube.`, 'success');
+            } catch (e) {
+                logToOutput('Error al guardar en la nube: ' + e.message, 'error');
+            }
+        });
+
+        // --- 6. Gestión de Pestañas Inferiores ---
+        const tabs = document.getElementById('panel-tabs');
+        const tabOutput = document.getElementById('tab-output');
+        const tabSerial = document.getElementById('tab-serial');
+        const outputConsole = document.getElementById('output-console');
+        const serialConsole = document.getElementById('serial-console');
+
+        tabs.addEventListener('change', () => {
+            if (tabs.activeTabIndex === 0) {
+                tabOutput.classList.add('active');
+                tabSerial.classList.remove('active');
+            } else {
+                tabOutput.classList.remove('active');
+                tabSerial.classList.add('active');
+                serialConsole.scrollTop = serialConsole.scrollHeight;
+            }
+        });
+
+        document.getElementById('btn-toggle-panel').addEventListener('click', () => {
+            const panel = document.getElementById('bottom-panel');
+            panel.classList.toggle('collapsed');
+        });
+
+        function logToOutput(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log-entry log-${type}`;
+            div.textContent = message;
+            outputConsole.appendChild(div);
+            outputConsole.scrollTop = outputConsole.scrollHeight;
+        }
+
+        document.getElementById('btn-clear-panel').addEventListener('click', () => {
+            if (tabs.activeTabIndex === 0) outputConsole.innerHTML = '';
+            else serialConsole.innerHTML = '';
+        });
+
+        // --- 7. COMPILACIÓN REAL (Wokwi API) ---
+        async function compileRealCode() {
+            tabs.activeTabIndex = 0;
+            tabOutput.classList.add('active');
+            tabSerial.classList.remove('active');
+            outputConsole.innerHTML = '';
+
+            logToOutput('Enviando código y archivos al compilador en la nube...', 'info');
+            
+            // Si el main.ino no existe, usamos el actual como principal (fallback de seguridad)
+            const sourceCode = files["main.ino"] || editor.getValue();
+
+            try {
+                // Ahora enviamos todos los archivos del explorador (incluido libraries.txt)
+                const response = await fetch('https://hexi.wokwi.com/build', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        sketch: sourceCode, 
+                        board: 'uno',
+                        files: files  // Permite compilar multi-archivos y procesar libraries.txt
+                    })
+                });
+
+                if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+                const data = await response.json();
+
+                if (data.stderr) {
+                    const isError = data.stderr.toLowerCase().includes('error:');
+                    logToOutput(data.stderr, isError ? 'error' : 'command');
+                    
+                    if (isError) {
+                        const annotations = [];
+                        const lines = data.stderr.split('\n');
+                        const errorRegex = /:(\d+):(\d+):\s*(error|warning):\s*(.*)/;
+                        
+                        lines.forEach(line => {
+                            const match = line.match(errorRegex);
+                            if (match) {
+                                annotations.push({
+                                    row: parseInt(match[1]) - 1,
+                                    column: parseInt(match[2]) - 1,
+                                    text: match[4],
+                                    type: match[3] === 'error' ? 'error' : 'warning'
+                                });
+                            }
+                        });
+                        
+                        if (annotations.length > 0) editor.getSession().setAnnotations(annotations);
+                    }
+                    if (isError) return null;
+                }
+
+                logToOutput(`[WASM/Cloud] ¡Compilación exitosa! Tamaño del Hexadecimal: ${data.hex.length} bytes.`, 'success');
+                editor.getSession().clearAnnotations();
+                return data.hex; 
+            } catch (err) {
+                logToOutput('Error de red al compilar: ' + err.message, 'error');
+                return null;
+            }
+        }
+
+        document.getElementById('btn-compile').addEventListener('click', compileRealCode);
+
+        // --- 8. Lógica de Flasheo Web Serial (STK500v1 Nativo) ---
+        let port;
+        let reader;
+        let inputDone;
+        let inputStream;
+        let keepReading = true;
+
+        const btnConnect = document.getElementById('btn-connect');
+        const boardName = document.getElementById('board-name');
+        const serialStatus = document.getElementById('serial-status');
+        const serialInput = document.getElementById('serial-input');
+        const btnSendSerial = document.getElementById('btn-send-serial');
+        const baudRateSelect = document.getElementById('baud-rate');
+
+        function parseHexFile(hexStr) {
+            let maxAddr = 0;
+            let memory = new Uint8Array(32768); 
+            memory.fill(0xFF); 
+            
+            const lines = hexStr.split('\n');
+            for(let line of lines) {
+                line = line.trim();
+                if(!line.startsWith(':')) continue;
+                const len = parseInt(line.substring(1, 3), 16);
+                const addr = parseInt(line.substring(3, 7), 16);
+                const type = parseInt(line.substring(7, 9), 16);
+                
+                if(type === 0) { 
+                    for(let i=0; i<len; i++) memory[addr + i] = parseInt(line.substring(9 + i*2, 11 + i*2), 16);
+                    if(addr + len > maxAddr) maxAddr = addr + len;
+                }
+            }
+            return memory.slice(0, Math.ceil(maxAddr / 128) * 128); 
+        }
+
+        class AvrFlasher {
+            constructor(port, logger) { this.port = port; this.log = logger; }
+
+            async sendAndReceive(cmd, expectedLen = 2, timeout = 2000) {
+                const writer = this.port.writable.getWriter();
+                await writer.write(new Uint8Array(cmd));
+                writer.releaseLock();
+
+                const tempReader = this.port.readable.getReader();
+                const result = new Uint8Array(expectedLen);
+                let offset = 0;
+
+                try {
+                    const readLoop = async () => {
+                        while (offset < expectedLen) {
+                            const { value, done } = await tempReader.read();
+                            if (value) {
+                                const chunk = value.slice(0, expectedLen - offset);
+                                result.set(chunk, offset);
+                                offset += chunk.length;
+                            }
+                            if (done) break;
+                        }
+                    };
+                    await Promise.race([readLoop(), new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), timeout))]);
+                } finally { tempReader.releaseLock(); }
+
+                if (result[0] !== 0x14 || result[result.length - 1] !== 0x10) throw new Error("Respuesta inválida del Bootloader.");
+                return result;
+            }
+
+            async flash(memory) {
+                this.log("Reiniciando placa para entrar en modo bootloader...", "command");
+                await this.port.setSignals({ dataTerminalReady: false, requestToSend: false });
+                await new Promise(r => setTimeout(r, 250));
+                await this.port.setSignals({ dataTerminalReady: true, requestToSend: true });
+                await new Promise(r => setTimeout(r, 50));
+
+                this.log("Sincronizando con Optiboot...", "info");
+                let synced = false;
+                for(let i=0; i<10; i++) {
+                    try { await this.sendAndReceive([0x30, 0x20], 2, 500); synced = true; break; } 
+                    catch(e) { await new Promise(r => setTimeout(r, 100)); }
+                }
+                if(!synced) throw new Error("No se pudo contactar con la placa Arduino.");
+
+                this.log("Activando programación de Flash...", "command");
+                await this.sendAndReceive([0x50, 0x20]);
+
+                const pageSize = 128;
+                for(let offset=0; offset < memory.length; offset += pageSize) {
+                    const addr = offset / 2; 
+                    await this.sendAndReceive([0x55, addr & 0xFF, (addr >> 8) & 0xFF, 0x20]); 
+                    let chunk = memory.slice(offset, offset + pageSize);
+                    const cmd = [0x64, (pageSize >> 8) & 0xFF, pageSize & 0xFF, 0x46]; 
+                    const fullCmd = new Uint8Array(cmd.length + chunk.length + 1);
+                    fullCmd.set(cmd); fullCmd.set(chunk, cmd.length); fullCmd[fullCmd.length - 1] = 0x20;
+                    await this.sendAndReceive(fullCmd);
+                    if(offset % 1024 === 0) this.log(`Grabando: ${Math.round((offset/memory.length)*100)}%...`, "info");
+                }
+
+                this.log("Verificación OK. Saliendo de programación...", "success");
+                await this.sendAndReceive([0x51, 0x20]);
+            }
+        }
+
+        document.getElementById('btn-upload').addEventListener('click', async () => {
+            if (!port) { alert("Primero debes conectar tu placa usando el botón 'Seleccionar Placa'"); return; }
+            
+            const hexString = await compileRealCode();
+            if(!hexString) return;
+            const binBuffer = parseHexFile(hexString);
+
+            keepReading = false;
+            if (reader) await reader.cancel();
+            if (inputDone) await inputDone.catch(() => {});
+
+            try {
+                logToOutput("----------------------------------------------------", "info");
+                logToOutput("Iniciando avrdude (JavaScript Flasher)...", "command");
+                const flasher = new AvrFlasher(port, logToOutput);
+                await flasher.flash(binBuffer);
+                logToOutput("¡Subida completada exitosamente! Código corriendo en tu Arduino.", "success");
+            } catch (err) {
+                logToOutput("Error durante el flasheo: " + err.message, "error");
+            } finally {
+                logToOutput("Reactivando Monitor Serie...", "info");
+                keepReading = true;
+                readLoop();
+                tabs.activeTabIndex = 1;
+                tabOutput.classList.remove('active');
+                tabSerial.classList.add('active');
+            }
+        });
+
+        async function connectToDevice() {
+            if ('serial' in navigator) {
+                try {
+                    port = await navigator.serial.requestPort();
+                    const baudRate = parseInt(baudRateSelect.value);
+                    await port.open({ baudRate: baudRate });
+
+                    boardName.textContent = "Arduino Conectado";
+                    btnConnect.style.background = "var(--ide-primary)";
+                    btnConnect.style.color = "#fff";
+                    btnConnect.style.borderColor = "var(--ide-primary)";
+
+                    serialStatus.textContent = `Conectado a ${baudRate} baudios.`;
+                    serialStatus.className = "log-entry log-success";
+                    
+                    serialInput.disabled = false;
+                    btnSendSerial.disabled = false;
+
+                    tabs.activeTabIndex = 1; 
+                    tabOutput.classList.remove('active');
+                    tabSerial.classList.add('active');
+                    
+                    keepReading = true;
+                    readLoop();
+                } catch (err) { logToOutput('Error al conectar WebUSB: ' + err.message, 'error'); }
+            } else { alert('Tu navegador no soporta Web Serial API. Usa Google Chrome o Edge en escritorio.'); }
+        }
+
+        async function readLoop() {
+            const decoder = new TextDecoderStream();
+            inputDone = port.readable.pipeTo(decoder.writable);
+            inputStream = decoder.readable;
+            reader = inputStream.getReader();
+
+            let partialChunk = "";
+
+            try {
+                while (keepReading) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    if (value) {
+                        partialChunk += value;
+                        if (partialChunk.includes('\n')) {
+                            const lines = partialChunk.split('\n');
+                            partialChunk = lines.pop(); 
+                            lines.forEach(line => {
+                                if(line.trim() !== "") {
+                                    const div = document.createElement('div');
+                                    div.className = 'log-entry log-text';
+                                    div.textContent = "> " + line.replace('\r', '');
+                                    serialConsole.appendChild(div);
+                                }
+                            });
+                            serialConsole.scrollTop = serialConsole.scrollHeight;
+                        }
+                    }
+                }
+            } catch (error) {} finally { reader.releaseLock(); }
+        }
+
+        async function sendSerialData() {
+            const text = serialInput.value + '\r\n';
+            if (!text || text === '\r\n' || !port || !port.writable) return;
+            const encoder = new TextEncoder();
+            const writer = port.writable.getWriter();
+            try {
+                await writer.write(encoder.encode(text));
+                const div = document.createElement('div');
+                div.className = 'log-entry log-info';
+                div.textContent = "TX: " + text.trim();
+                serialConsole.appendChild(div);
+                serialConsole.scrollTop = serialConsole.scrollHeight;
+                serialInput.value = '';
+            } catch (err) {} finally { writer.releaseLock(); }
+        }
+
+        btnConnect.addEventListener('click', connectToDevice);
+        btnSendSerial.addEventListener('click', sendSerialData);
+        serialInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendSerialData(); });
+        
+        baudRateSelect.addEventListener('change', async () => {
+            if (port && port.readable) {
+                keepReading = false;
+                if (reader) await reader.cancel(); 
+                await inputDone.catch(() => {}); 
+                await port.close(); 
+                boardName.textContent = "Seleccionar Placa (Desconectado)";
+                btnConnect.style.background = "";
+                btnConnect.style.color = "var(--ide-text-light)";
+                connectToDevice();
+            }
+        });
+
+    </script>
+</body>
+</html>
